@@ -3,6 +3,7 @@ package s3
 import (
 	"compress/gzip"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -54,6 +55,7 @@ type Config struct {
 	TimeSliceFormat string `yaml:"time_slice_format"`
 	AwsS3OutputKey  string `yaml:"aws_s3_output_key"`
 	SampleSize      *int   `yaml:"sample_size,omitempty"`
+	OutputFormat    string `yaml:"output_format,omitempty"`
 }
 
 type OutputFileInfo struct {
@@ -82,8 +84,21 @@ func (fileSaver *FileSaver) WriteToFile(name string, event *buffer.Event) error 
 		fileSaver.FileInfo.Count = 0
 	}
 
-	text := *event.Text
-	_, err := fileSaver.Writer.Write([]byte(text))
+	var text []byte
+	switch fileSaver.Config.OutputFormat {
+	case "json":
+		var err error
+		text, err = json.Marshal(*event.Fields)
+
+		if err != nil {
+			log.Println("Error converting to json:", err)
+			return err
+		}
+	default:
+		text = []byte(*event.Text)
+	}
+
+	_, err := fileSaver.Writer.Write(text)
 
 	if err != nil {
 		log.Println("Error writing:", err)
