@@ -165,8 +165,12 @@ func (p *Parser) read() (uint32, error) {
 				return seq, err
 			}
 			ev.Source = fmt.Sprintf("lumberjack://%s%s", fields["host"], fields["file"])
-			jsonNumber := fields["offset"].(json.Number)
-			ev.Offset, _ = jsonNumber.Int64()
+
+			if fields["offset"] != nil {
+				jsonNumber := fields["offset"].(json.Number)
+				ev.Offset, _ = jsonNumber.Int64()
+			}
+
 			ev.Line = uint64(seq)
 			t := fields["message"].(string)
 			ev.Text = &t
