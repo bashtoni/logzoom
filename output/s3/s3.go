@@ -54,6 +54,7 @@ type Config struct {
 	Path            string `yaml:"s3_path"`
 	TimeSliceFormat string `yaml:"time_slice_format"`
 	AwsS3OutputKey  string `yaml:"aws_s3_output_key"`
+	AwsS3OutputACL  string `yaml:"aws_s3_output_acl,omitempty"`
 	SampleSize      *int   `yaml:"sample_size,omitempty"`
 	OutputFormat    string `yaml:"output_format,omitempty"`
 }
@@ -150,6 +151,7 @@ func (s3Writer *S3Writer) doUpload(fileInfo OutputFileInfo) error {
 		Bucket:          aws.String(s3Writer.Config.AwsS3Bucket),
 		Key:             aws.String(destFile),
 		ContentEncoding: aws.String("gzip"),
+		ACL:             aws.String(s3Writer.Config.AwsS3OutputACL),
 	})
 
 	if s3Error == nil {
