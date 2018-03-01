@@ -34,8 +34,8 @@ type Parser struct {
 
 func NewParser(c net.Conn, r input.Receiver, sampleSize int) *Parser {
 	return &Parser{
-		Conn: c,
-		Recv: r,
+		Conn:       c,
+		Recv:       r,
 		SampleSize: sampleSize,
 	}
 }
@@ -132,9 +132,15 @@ func (p *Parser) read() (uint32, error) {
 			}
 
 			ev.Source = fmt.Sprintf("lumberjack://%s%s", fields["host"], fields["file"])
-			ev.Offset, _ = strconv.ParseInt(fields["offset"].(string), 10, 64)
+			ev.Offset, err = strconv.ParseInt(fields["offset"].(string), 10, 64)
+			if err != nil {
+				return seq, err
+			}
 			ev.Line = uint64(seq)
-			t := fields["line"].(string)
+			t, ok := fields["line"].(string)
+			if !ok {
+				return seq, fmt.Errorf("Bad line (%T)", fields["line"])
+			}
 			ev.Text = &t
 			ev.Fields = &fields
 
@@ -172,7 +178,10 @@ func (p *Parser) read() (uint32, error) {
 			}
 
 			ev.Line = uint64(seq)
-			t := fields["message"].(string)
+			t, ok := fields["message"].(string)
+			if !ok {
+				return seq, fmt.Errorf("Bad message (%T)", fields["message"])
+			}
 			ev.Text = &t
 			ev.Fields = &fields
 
